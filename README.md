@@ -1,0 +1,85 @@
+# RPi4 Interface Drivers
+
+A lightweight, containerized driver system for monitoring Raspberry Pi 4 hardware interfaces (GPIO, I2C, SPI, UART) and streaming raw data to other containers.
+
+## Features
+
+- 🔌 **Universal Interface Support**: GPIO, I2C, SPI, and UART interfaces
+- 🔄 **Auto-discovery**: Automatic device detection and connection
+- 🚀 **Real-time Streaming**: Low-latency data streaming via MQTT/WebSocket
+- 🐳 **Docker Native**: Designed for containerized environments
+- 🔧 **Plug & Play**: Minimal configuration required
+- 🔄 **Auto-reconnection**: Automatic recovery from device disconnections
+- 📦 **Raw Data Transfer**: Transparent data forwarding without protocol interpretation
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/rpi4-interface-drivers.git
+cd rpi4-interface-drivers
+
+# Run with Docker Compose
+docker-compose up -d
+```
+
+## Minimal Configuration
+
+```yaml
+# config.yaml
+version: 1
+output:
+  mode: tagged
+  mqtt:
+    broker: localhost
+```
+
+That's it! The driver will automatically detect and monitor all available interfaces.
+
+## Architecture
+
+This project acts as a bridge between RPi4 hardware interfaces and your applications:
+
+```
+RPi4 Hardware → Interface Driver Container → MQTT/WebSocket → Your Application
+```
+
+## Supported Interfaces
+
+- **GPIO**: Digital input/output with edge detection
+- **I2C**: Master mode with auto-discovery (0x08-0x77)
+- **SPI**: Full-duplex communication up to 10MHz
+- **UART**: Auto-baudrate detection (9600-115200)
+
+## Output Modes
+
+1. **Raw Only**: Pure binary data (minimal overhead)
+2. **Tagged**: Timestamp + raw data (recommended)
+3. **Structured**: JSON format with metadata (debugging)
+
+## Documentation
+
+- [Design Document](DESIGN.md) - Detailed architecture and specifications
+- [Configuration Guide](docs/configuration.md) - Advanced configuration options
+- [API Reference](docs/api.md) - Data format and protocol details
+- [Examples](examples/) - Sample implementations
+
+## Requirements
+
+- Raspberry Pi 4
+- Docker and Docker Compose
+- Access to hardware interfaces (`/dev/*`)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+- 🐛 [Report Issues](https://github.com/yourusername/rpi4-interface-drivers/issues)
+- 💬 [Discussions](https://github.com/yourusername/rpi4-interface-drivers/discussions)
+- 📧 Contact: your-email@example.com
