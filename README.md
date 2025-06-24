@@ -59,6 +59,8 @@ RPi4 Hardware → Interface Driver Container → MQTT/WebSocket → Your Applica
 
 - [Design Document](DESIGN.md) - Detailed architecture and specifications
 - [Plug & Play Guide](PLUGPLAY.md) - Zero-configuration setup and hot-plug support
+- [Implementation Details](docs/PLUGPLAY_IMPLEMENTATION.md) - Technical implementation guide
+- [Architecture Review](docs/ARCHITECTURE_REVIEW.md) - Design decisions and feedback request
 - [Configuration Guide](docs/configuration.md) - Advanced configuration options
 - [API Reference](docs/api.md) - Data format and protocol details
 - [Examples](examples/) - Sample implementations
