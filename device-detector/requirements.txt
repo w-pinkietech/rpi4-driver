@@ -1,0 +1,4 @@
+pyudev==0.24.1
+redis==5.0.1
+pytest==7.4.3
+pytest-mock==3.12.0
