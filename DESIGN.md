@@ -124,23 +124,31 @@ Raspberry Pi 4のハードウェアインターフェース（GPIO、I2C、SPI�
 - 永続化対応
 - 高速バッファリング
 
-## 5. 自動接続機能
+## 5. プラグアンドプレイ機能
 
-### 5.1 デバイス検出
+### 5.1 リアルタイムデバイス検出
+- **udevイベント監視**: デバイスの接続/切断を瞬時に検出
+- **デバイス自動分類**: UART、I2C、SPI、GPIOの自動判別
+- **ベンダー情報取得**: USB VID/PIDによるデバイス識別
+
+### 5.2 ゼロ設定起動
 ```yaml
-auto_discovery:
-  enabled: true
-  scan_interval: 5  # 秒
-  strategies:
-    uart:
-      patterns: ["/dev/ttyUSB*", "/dev/ttyACM*", "/dev/ttyS*"]
-      probe_baudrates: [9600, 115200]
-    i2c:
-      buses: [0, 1]
-      address_range: [0x08, 0x77]
+# 最小設定（完全自動モード）
+version: 1
+mode: auto
 ```
 
-### 5.2 再接続ロジック
+### 5.3 デバイスプロファイル
+- **既知デバイス**: Arduino、FTDI、GPS等の自動認識
+- **プロトコル推定**: 通信パターンによる自動プロトコル判定
+- **最適設定**: デバイス固有のデフォルト設定適用
+
+### 5.4 ホットプラグ対応
+- **動的接続**: 実行中のデバイス追加/削除に対応
+- **状態同期**: 定期的なデバイス状態確認
+- **リアルタイム通知**: 接続状態変更の即座な通知
+
+### 5.5 再接続ロジック
 - Exponential Backoff: 1s → 2s → 4s → ... → 60s（最大）
 - 接続状態の通知（イベント配信）
 - エラー詳細のログ記録
@@ -149,6 +157,11 @@ auto_discovery:
 
 ### 6.1 最小設定例
 ```yaml
+# 完全自動モード（推奨）
+version: 1
+mode: auto
+
+# または手動指定
 version: 1
 output:
   mode: tagged
@@ -241,14 +254,18 @@ CMD ["python", "-m", "src.main"]
 version: '3.8'
 
 services:
-  interface-driver:
+  rpi4-driver:
     build: .
-    privileged: true  # または device指定
+    privileged: true  # プラグアンドプレイに必要
     volumes:
       - /dev:/dev
+      - /sys:/sys:ro
+      - /run/udev:/run/udev:ro  # udevイベント
       - ./config.yaml:/app/config.yaml
     environment:
       - LOG_LEVEL=INFO
+      - HOTPLUG_MODE=enabled
+      - AUTO_CONFIG=true
     restart: unless-stopped
     
   mqtt-broker:

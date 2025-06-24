@@ -5,10 +5,11 @@ A lightweight, containerized driver system for monitoring Raspberry Pi 4 hardwar
 ## Features
 
 - 🔌 **Universal Interface Support**: GPIO, I2C, SPI, and UART interfaces
-- 🔄 **Auto-discovery**: Automatic device detection and connection
+- ⚡ **True Plug & Play**: Zero-configuration device detection and connection
+- 🔍 **Smart Device Recognition**: Automatic device identification and protocol detection
+- 🔄 **Hot-plug Support**: Real-time device add/remove detection via udev
 - 🚀 **Real-time Streaming**: Low-latency data streaming via MQTT/WebSocket
 - 🐳 **Docker Native**: Designed for containerized environments
-- 🔧 **Plug & Play**: Minimal configuration required
 - 🔄 **Auto-reconnection**: Automatic recovery from device disconnections
 - 📦 **Raw Data Transfer**: Transparent data forwarding without protocol interpretation
 
@@ -23,18 +24,15 @@ cd rpi4-driver
 docker-compose up -d
 ```
 
-## Minimal Configuration
+## Zero Configuration
 
 ```yaml
-# config.yaml
+# config.yaml (optional - works without any config!)
 version: 1
-output:
-  mode: tagged
-  mqtt:
-    broker: localhost
+mode: auto
 ```
 
-That's it! The driver will automatically detect and monitor all available interfaces.
+That's it! Just connect your devices and they'll be automatically detected, configured, and monitored. No configuration files needed for basic operation.
 
 ## Architecture
 
@@ -60,6 +58,7 @@ RPi4 Hardware → Interface Driver Container → MQTT/WebSocket → Your Applica
 ## Documentation
 
 - [Design Document](DESIGN.md) - Detailed architecture and specifications
+- [Plug & Play Guide](PLUGPLAY.md) - Zero-configuration setup and hot-plug support
 - [Configuration Guide](docs/configuration.md) - Advanced configuration options
 - [API Reference](docs/api.md) - Data format and protocol details
 - [Examples](examples/) - Sample implementations
