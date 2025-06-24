@@ -2,7 +2,6 @@
 import pytest
 import json
 import time
-from unittest.mock import Mock, patch
 from src.detector import DeviceDetector
 
 
@@ -53,14 +52,14 @@ class TestDeviceDetector:
         detector = DeviceDetector()
         
         # TTYデバイスは処理対象
-        assert detector.should_monitor_subsystem('tty') == True
+        assert detector.should_monitor_subsystem('tty')
         
         # USBデバイスは処理対象
-        assert detector.should_monitor_subsystem('usb') == True
+        assert detector.should_monitor_subsystem('usb')
         
         # その他は処理対象外
-        assert detector.should_monitor_subsystem('block') == False
-        assert detector.should_monitor_subsystem('net') == False
+        assert not detector.should_monitor_subsystem('block')
+        assert not detector.should_monitor_subsystem('net')
     
     def test_publish_event_to_redis(self, mock_redis):
         """Redisへのイベント発行をテスト"""
@@ -114,7 +113,7 @@ class TestDeviceDetector:
         processed = detector.process_single_event()
         
         # Then: イベントが正しく処理される
-        assert processed == True
+        assert processed
         mock_redis.publish.assert_called_once()
         
         # 発行されたイベントの内容を確認

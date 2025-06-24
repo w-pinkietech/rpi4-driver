@@ -26,7 +26,7 @@ USER detector
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import redis; redis.Redis(host='redis').ping()" || exit 1
+    CMD python -c "import redis; redis.Redis(host='redis', socket_connect_timeout=5).ping()" || exit 1
 
 # Set entrypoint
 ENTRYPOINT ["python", "-m", "src.main"]

@@ -1,7 +1,6 @@
 """pytest configuration for device detector tests"""
 import pytest
 from unittest.mock import Mock, patch
-import redis
 
 
 @pytest.fixture
