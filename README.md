@@ -13,7 +13,7 @@ A lightweight, containerized driver system for monitoring Raspberry Pi 4 hardwar
 - 📦 **Microservices Architecture**: Isolated, scalable service components
 - 🐳 **Docker Native**: Designed for containerized environments
 - 🔄 **Auto-reconnection**: Automatic recovery from device disconnections
-- 📊 **Raw Data Transfer**: Transparent data forwarding without protocol interpretation
+- 📊 **Smart Protocol Handling**: 70% auto-detection + guaranteed raw passthrough for unknowns
 
 ## Quick Start
 
@@ -50,10 +50,11 @@ Data Processor (standard privileges)
 Your Applications
 ```
 
-**Security Benefits:**
-- Minimal privileged code surface (<50 lines)
-- Service isolation and failure containment
-- Independent scaling and updates
+**Key Benefits:**
+- **Security**: Minimal privileged code surface (<50 lines)
+- **Compatibility**: 70% auto-detection + 100% raw passthrough guarantee
+- **Scalability**: Multi-platform support (RPi4, Jetson, BeagleBone, x86)
+- **Extensibility**: User-defined custom protocols and community sharing
 
 ## Supported Interfaces
 
@@ -70,20 +71,28 @@ Your Applications
 
 ## Documentation
 
-- [Design Document](DESIGN.md) - Detailed architecture and specifications
-- [Microservices Architecture](docs/MICROSERVICES_ARCHITECTURE.md) - **Security-first architecture (UPDATED)**
+### 📋 **Core Documentation**
+- [Final Architecture](docs/FINAL_ARCHITECTURE.md) - **Complete system design and rationale**
+- [Design Document](DESIGN.md) - Detailed architecture and specifications  
+- [Microservices Architecture](docs/MICROSERVICES_ARCHITECTURE.md) - Security-first architecture
+
+### 🔌 **Plug & Play Features**
 - [Plug & Play Guide](PLUGPLAY.md) - Zero-configuration setup and hot-plug support
+- [Custom Protocols](docs/CUSTOM_PROTOCOLS.md) - **70% auto-detection + custom protocol support**
 - [Implementation Details](docs/PLUGPLAY_IMPLEMENTATION.md) - Technical implementation guide
+
+### 🛠️ **Development & Operations**
 - [Architecture Review](docs/ARCHITECTURE_REVIEW.md) - Design decisions and feedback
 - [Configuration Guide](docs/configuration.md) - Advanced configuration options
 - [API Reference](docs/api.md) - Data format and protocol details
 - [Examples](examples/) - Sample implementations
 
-## Requirements
+## Platform Support
 
-- Raspberry Pi 4
-- Docker and Docker Compose
-- Access to hardware interfaces (`/dev/*`)
+- **Primary**: Raspberry Pi 4
+- **Planned**: Jetson Nano, BeagleBone Black, Generic x86 Linux
+- **Requirements**: Docker and Docker Compose
+- **Permissions**: Hardware interface access (`/dev/*`)
 
 ## Contributing
 
