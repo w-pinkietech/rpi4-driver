@@ -9,9 +9,11 @@ A lightweight, containerized driver system for monitoring Raspberry Pi 4 hardwar
 - 🔍 **Smart Device Recognition**: Automatic device identification and protocol detection
 - 🔄 **Hot-plug Support**: Real-time device add/remove detection via udev
 - 🚀 **Real-time Streaming**: Low-latency data streaming via MQTT/WebSocket
+- 🛡️ **Security First**: Privilege separation with minimal privileged code (<50 lines)
+- 📦 **Microservices Architecture**: Isolated, scalable service components
 - 🐳 **Docker Native**: Designed for containerized environments
 - 🔄 **Auto-reconnection**: Automatic recovery from device disconnections
-- 📦 **Raw Data Transfer**: Transparent data forwarding without protocol interpretation
+- 📊 **Raw Data Transfer**: Transparent data forwarding without protocol interpretation
 
 ## Quick Start
 
@@ -36,11 +38,22 @@ That's it! Just connect your devices and they'll be automatically detected, conf
 
 ## Architecture
 
-This project acts as a bridge between RPi4 hardware interfaces and your applications:
+This project uses a **security-first microservices architecture** with privilege separation:
 
 ```
-RPi4 Hardware → Interface Driver Container → MQTT/WebSocket → Your Application
+Device Detector (privileged, ~50 lines)
+        ↓ Redis Events
+Device Manager (standard privileges)  
+        ↓ Device Configs
+Data Processor (standard privileges)
+        ↓ MQTT/WebSocket
+Your Applications
 ```
+
+**Security Benefits:**
+- Minimal privileged code surface (<50 lines)
+- Service isolation and failure containment
+- Independent scaling and updates
 
 ## Supported Interfaces
 
@@ -58,9 +71,10 @@ RPi4 Hardware → Interface Driver Container → MQTT/WebSocket → Your Applica
 ## Documentation
 
 - [Design Document](DESIGN.md) - Detailed architecture and specifications
+- [Microservices Architecture](docs/MICROSERVICES_ARCHITECTURE.md) - **Security-first architecture (UPDATED)**
 - [Plug & Play Guide](PLUGPLAY.md) - Zero-configuration setup and hot-plug support
 - [Implementation Details](docs/PLUGPLAY_IMPLEMENTATION.md) - Technical implementation guide
-- [Architecture Review](docs/ARCHITECTURE_REVIEW.md) - Design decisions and feedback request
+- [Architecture Review](docs/ARCHITECTURE_REVIEW.md) - Design decisions and feedback
 - [Configuration Guide](docs/configuration.md) - Advanced configuration options
 - [API Reference](docs/api.md) - Data format and protocol details
 - [Examples](examples/) - Sample implementations
