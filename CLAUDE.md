@@ -12,7 +12,7 @@ This project provides drivers to monitor and access Raspberry Pi 4 interfaces fr
 ## Development Requirements
 - Raspberry Pi 4
 - Docker and Docker Compose
-- Python 3.8+
+- Python 3.11+
 - Access to /dev devices from Docker containers
 
 ## Testing Commands

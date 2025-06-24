@@ -16,8 +16,8 @@ A lightweight, containerized driver system for monitoring Raspberry Pi 4 hardwar
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/rpi4-interface-drivers.git
-cd rpi4-interface-drivers
+git clone https://github.com/w-pinkietech/rpi4-driver.git
+cd rpi4-driver
 
 # Run with Docker Compose
 docker-compose up -d
@@ -80,6 +80,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-- 🐛 [Report Issues](https://github.com/yourusername/rpi4-interface-drivers/issues)
-- 💬 [Discussions](https://github.com/yourusername/rpi4-interface-drivers/discussions)
-- 📧 Contact: your-email@example.com
+- 🐛 [Report Issues](https://github.com/w-pinkietech/rpi4-driver/issues)
+- 💬 [Discussions](https://github.com/w-pinkietech/rpi4-driver/discussions)
+- 📧 Contact: github.cycling777@gmail.com
