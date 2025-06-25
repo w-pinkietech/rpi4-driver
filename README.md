@@ -71,18 +71,23 @@ Your Applications
 
 ## Documentation
 
-### 📋 **Core Documentation**
-- [Final Architecture](docs/FINAL_ARCHITECTURE.md) - **Complete system design and rationale**
-- [Design Document](DESIGN.md) - Detailed architecture and specifications  
-- [Microservices Architecture](docs/MICROSERVICES_ARCHITECTURE.md) - Security-first architecture
+### 🏗️ **Design Documentation**
+- [Architecture Overview](docs/design/) - All architecture and design documents
+  - [Final Architecture](docs/design/FINAL_ARCHITECTURE.md) - Complete system design and rationale
+  - [Design Document](docs/design/DESIGN.md) - Detailed architecture and specifications
+  - [Microservices Architecture](docs/design/MICROSERVICES_ARCHITECTURE.md) - Security-first architecture
+  - [Plug & Play Guide](docs/design/PLUGPLAY.md) - Zero-configuration setup and hot-plug support
+  - [Custom Protocols](docs/design/CUSTOM_PROTOCOLS.md) - 70% auto-detection + custom protocol support
+  - [Implementation Details](docs/design/PLUGPLAY_IMPLEMENTATION.md) - Technical implementation guide
+  - [Architecture Review](docs/design/ARCHITECTURE_REVIEW.md) - Design decisions and feedback
 
-### 🔌 **Plug & Play Features**
-- [Plug & Play Guide](PLUGPLAY.md) - Zero-configuration setup and hot-plug support
-- [Custom Protocols](docs/CUSTOM_PROTOCOLS.md) - **70% auto-detection + custom protocol support**
-- [Implementation Details](docs/PLUGPLAY_IMPLEMENTATION.md) - Technical implementation guide
+### 📋 **Development Process**
+- [Development Process Guide](docs/process/) - Development guidelines and workflows
+  - [Development Rules](docs/process/DEVELOPMENT_RULES.md) - 開発ルールブック
+  - [PR Guidelines](docs/process/PR_GUIDELINES.md) - Pull Request submission guidelines
+- [Claude Instructions](CLAUDE.md) - Project-specific AI assistant instructions (at root for AI access)
 
-### 🛠️ **Development & Operations**
-- [Architecture Review](docs/ARCHITECTURE_REVIEW.md) - Design decisions and feedback
+### 🛠️ **Technical References**
 - [Configuration Guide](docs/configuration.md) - Advanced configuration options
 - [API Reference](docs/api.md) - Data format and protocol details
 - [Examples](examples/) - Sample implementations
