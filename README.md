@@ -9,7 +9,7 @@ A lightweight, containerized driver system for monitoring Raspberry Pi 4 hardwar
 - 🔍 **Smart Device Recognition**: Automatic device identification and protocol detection
 - 🔄 **Hot-plug Support**: Real-time device add/remove detection via udev
 - 🚀 **Real-time Streaming**: Low-latency data streaming via MQTT/WebSocket
-- 🛡️ **Security First**: Privilege separation with minimal privileged code (<50 lines)
+- 🛡️ **Security First**: Privilege separation with minimal privileged code focused on security
 - 📦 **Microservices Architecture**: Isolated, scalable service components
 - 🐳 **Docker Native**: Designed for containerized environments
 - 🔄 **Auto-reconnection**: Automatic recovery from device disconnections
@@ -41,7 +41,7 @@ That's it! Just connect your devices and they'll be automatically detected, conf
 This project uses a **security-first microservices architecture** with privilege separation:
 
 ```
-Device Detector (privileged, ~50 lines)
+Device Detector (privileged, minimal implementation)
         ↓ Redis Events
 Device Manager (standard privileges)  
         ↓ Device Configs
@@ -51,7 +51,7 @@ Your Applications
 ```
 
 **Key Benefits:**
-- **Security**: Minimal privileged code surface (<50 lines)
+- **Security**: Minimal privileged code surface focused on essential functions
 - **Compatibility**: 70% auto-detection + 100% raw passthrough guarantee
 - **Scalability**: Multi-platform support (RPi4, Jetson, BeagleBone, x86)
 - **Extensibility**: User-defined custom protocols and community sharing
