@@ -199,7 +199,7 @@ Data Processor (standard)
 
 ### Security Benefits
 
-1. **Minimal Attack Surface**: Only 50 lines of privileged code
+1. **Minimal Attack Surface**: Minimal privileged code focused on security
 2. **Failure Isolation**: Service failures don't cascade
 3. **Audit Simplicity**: Small privileged component is easy to review
 4. **Principle of Least Privilege**: Each service has minimal required access
@@ -241,7 +241,7 @@ CMD ["python", "manager.py"]
 ## Implementation Phases
 
 ### Phase 1: Core Infrastructure (1 week)
-- [x] Device Detector implementation (~50 lines)
+- [x] Device Detector implementation (minimal security-focused)
 - [x] Redis event bus setup
 - [x] Basic event flow verification
 - [ ] Container orchestration setup
@@ -339,7 +339,7 @@ docker-compose -f docker-compose.test.yml up --abort-on-container-exit
 
 This revised microservices architecture provides:
 
-1. **Enhanced Security**: Privileged code reduced to <50 lines
+1. **Enhanced Security**: Privileged code minimized for security
 2. **Better Maintainability**: Clear service boundaries
 3. **Improved Scalability**: Independent service scaling
 4. **Fault Isolation**: Service failures don't cascade
