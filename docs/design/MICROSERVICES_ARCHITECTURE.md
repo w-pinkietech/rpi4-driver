@@ -9,7 +9,7 @@ Based on security review feedback, the architecture has been revised to implemen
 ### 1. Device Detector (Privileged - Minimal)
 **Role**: Device event detection only  
 **Privileges**: Privileged container (udev access)  
-**Code Size**: ~50 lines  
+**Code Size**: Minimal implementation focused on security  
 **Responsibility**: Detect device connection/disconnection and publish events
 
 ```python
@@ -17,52 +17,27 @@ Based on security review feedback, the architecture has been revised to implemen
 """
 Device Detector - Minimal privileged container
 Responsibility: Only detect and notify device events
+Key principles:
+- Minimal code for security
+- Proper error handling for production use
+- Clear separation of concerns
 """
-import asyncio
-import pyudev
-import redis
-import json
-import time
-
-class MinimalDeviceDetector:
-    def __init__(self):
-        self.context = pyudev.Context()
-        self.monitor = pyudev.Monitor.from_netlink(self.context)
-        self.redis = redis.Redis(host='redis')
-        
-    async def run(self):
-        """Monitor device events and notify"""
-        self.monitor.filter_by('tty')
-        self.monitor.filter_by('usb')
-        
-        for device in iter(self.monitor.poll, None):
-            event = {
-                'timestamp': time.time(),
-                'action': device.action,  # 'add' or 'remove'
-                'path': device.device_node,  # '/dev/ttyUSB0'
-                'subsystem': device.subsystem,
-                'properties': dict(device.properties)
-            }
-            
-            # Simply notify - no processing
-            self.redis.publish('device_events', json.dumps(event))
-            print(f"Event: {device.action} - {device.device_node}")
-
-if __name__ == '__main__':
-    detector = MinimalDeviceDetector()
-    asyncio.run(detector.run())
+# Implementation focuses on:
+# 1. Device event monitoring (udev)
+# 2. Event filtering (relevant subsystems only)
+# 3. Event publishing (Redis)
+# 4. Basic lifecycle management
+# 5. Health monitoring capability
 ```
 
 ### 2. Device Manager (Standard Privileges)
 **Role**: Device identification and configuration  
 **Privileges**: Standard container (read-only /dev access)  
-**Code Size**: ~300 lines  
 **Responsibility**: VID/PID lookup, profile management, configuration generation
 
 ### 3. Data Processor (Standard Privileges)
 **Role**: Data processing and streaming  
 **Privileges**: Standard container (specific device access)  
-**Code Size**: ~500 lines  
 **Responsibility**: Protocol handling, data streaming, MQTT/WebSocket publishing
 
 ### 4. Support Services
@@ -224,7 +199,7 @@ Data Processor (standard)
 
 ### Security Benefits
 
-1. **Minimal Attack Surface**: Only 50 lines of privileged code
+1. **Minimal Attack Surface**: Minimal privileged code focused on security
 2. **Failure Isolation**: Service failures don't cascade
 3. **Audit Simplicity**: Small privileged component is easy to review
 4. **Principle of Least Privilege**: Each service has minimal required access
@@ -266,7 +241,7 @@ CMD ["python", "manager.py"]
 ## Implementation Phases
 
 ### Phase 1: Core Infrastructure (1 week)
-- [x] Device Detector implementation (~50 lines)
+- [x] Device Detector implementation (minimal security-focused)
 - [x] Redis event bus setup
 - [x] Basic event flow verification
 - [ ] Container orchestration setup
@@ -364,7 +339,7 @@ docker-compose -f docker-compose.test.yml up --abort-on-container-exit
 
 This revised microservices architecture provides:
 
-1. **Enhanced Security**: Privileged code reduced to <50 lines
+1. **Enhanced Security**: Privileged code minimized for security
 2. **Better Maintainability**: Clear service boundaries
 3. **Improved Scalability**: Independent service scaling
 4. **Fault Isolation**: Service failures don't cascade
