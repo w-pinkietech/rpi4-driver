@@ -20,7 +20,7 @@ This directory contains all design and architecture documentation for the RPi4 I
 
 ## 🎯 Design Principles
 
-1. **Security First** - Minimal privileged code (<50 lines)
+1. **Security First** - Minimal privileged code focused on security
 2. **Zero Configuration** - True plug & play operation
 3. **Universal Compatibility** - 100% raw data passthrough guarantee
 4. **Scalability** - Microservices architecture for independent scaling

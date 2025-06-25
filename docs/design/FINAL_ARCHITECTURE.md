@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-The RPi4 Interface Drivers project has evolved from a monolithic design to a **privilege-separated microservices architecture** that is secure, scalable, and adaptable to multiple Linux platforms. The key achievement is reducing privileged code to under 50 lines while maintaining complete plug-and-play functionality.
+The RPi4 Interface Drivers project has evolved from a monolithic design to a **privilege-separated microservices architecture** that is secure, scalable, and adaptable to multiple Linux platforms. The key achievement is reducing privileged code to a minimal security-focused implementation while maintaining complete plug-and-play functionality.
 
 ## Architecture Evolution
 
@@ -18,7 +18,7 @@ Single privileged container
 
 ### Final Design (Privilege Separated)
 ```
-Device Detector (privileged, 50 lines)
+Device Detector (privileged, minimal implementation)
 └─ "Device connected" notification only
 
 Device Manager (standard privileges, 300 lines)
@@ -277,7 +277,7 @@ class ProtocolLearner:
 ## Expected Outcomes
 
 ### Security Benefits
-- **Privileged code**: 1000 lines → **50 lines** (95% reduction)
+- **Privileged code**: 1000 lines → **minimal implementation** (significant reduction)
 - **Attack surface**: Minimized to essential functions only
 - **Audit complexity**: Simple, reviewable privileged component
 
@@ -294,7 +294,7 @@ class ProtocolLearner:
 ## Implementation Roadmap
 
 ### Phase 1: Core Infrastructure (Week 1)
-- [x] Device Detector implementation (50 lines)
+- [x] Device Detector implementation (minimal security-focused)
 - [x] Redis event bus setup
 - [ ] Basic event flow verification
 - [ ] Multi-platform container builds
@@ -329,7 +329,7 @@ class ProtocolLearner:
 ## Success Metrics
 
 ### Technical Metrics
-- **Privileged code lines**: < 50 (Target: achieved)
+- **Privileged code**: Minimal security-focused implementation (Target: achieved)
 - **Platform support**: 4+ platforms (RPi4, Jetson, BeagleBone, x86)
 - **Device auto-recognition**: 70% success rate
 - **Protocol detection**: 80% accuracy for known patterns
