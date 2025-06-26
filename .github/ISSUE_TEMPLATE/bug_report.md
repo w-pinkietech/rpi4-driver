@@ -31,7 +31,7 @@ Steps to reproduce the behavior:
 
 ## Logs / ログ
 <!-- If applicable, add logs to help explain your problem -->
-```
+```text
 [Paste relevant logs here]
 ```
 
@@ -45,6 +45,7 @@ Steps to reproduce the behavior:
 
 ## Claude AI Debug Assistance / Claude AI デバッグ支援
 <!-- Claude AIによるデバッグ支援が必要な場合は以下を使用 -->
+<!-- ⚠️ 重要: 機密情報（APIキー、パスワード、個人情報など）を含めないでください -->
 
 @claude このバグについて、以下の観点から分析をお願いします：
 

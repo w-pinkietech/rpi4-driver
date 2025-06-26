@@ -3,6 +3,14 @@
 ## Overview
 This project provides drivers to monitor and access Raspberry Pi 4 interfaces from Docker containers.
 
+## Important: When Creating Issues or PRs
+When creating new issues or pull requests, please refer to:
+- **Issue Templates**: `.github/ISSUE_TEMPLATE/` - Use appropriate template (epic, sub-issue, feature request, bug report)
+- **PR Template**: `.github/pull_request_template.md` - Follow the structured format
+- **Claude AI Guidelines**: `docs/process/CLAUDE_COLLABORATION.md` - For effective AI collaboration
+
+特に、エピックを作成する際は、サブイシューの品質基準を確認してください。
+
 ## Documentation Reference Guide
 
 ### 📐 Design and Architecture
