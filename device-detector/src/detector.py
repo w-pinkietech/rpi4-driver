@@ -1,9 +1,12 @@
 """Device Detector - Minimal privileged container for udev monitoring"""
 import time
 import json
+import logging
 import pyudev
 import redis
 from typing import Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class DeviceDetector:
@@ -29,12 +32,16 @@ class DeviceDetector:
         Returns:
             Dictionary containing event data
         """
-        return {
-            'action': device.action,
-            'path': device.device_node,
-            'timestamp': time.time(),
-            'properties': dict(device.properties)
-        }
+        try:
+            return {
+                'action': device.action,
+                'path': device.device_node,
+                'timestamp': time.time(),
+                'properties': dict(device.properties)
+            }
+        except Exception as e:
+            logger.error(f"Failed to parse device event: {e}")
+            raise
     
     def should_process(self, action: str) -> bool:
         """Determine if device action should be processed
@@ -64,9 +71,20 @@ class DeviceDetector:
         Args:
             event_data: Event data dictionary
         """
-        if self.redis_client:
+        if not self.redis_client:
+            logger.warning("Redis client not initialized, skipping event publish")
+            return
+            
+        try:
             message = json.dumps(event_data)
             self.redis_client.publish('device_events', message)
+            logger.debug(f"Published event: {event_data['action']} - {event_data['path']}")
+        except redis.ConnectionError as e:
+            logger.error(f"Redis connection error: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to publish event: {e}")
+            raise
     
     def setup_monitor(self) -> None:
         """Setup udev monitor with filters"""
@@ -81,11 +99,16 @@ class DeviceDetector:
             True if event was processed successfully
         """
         if not self.monitor:
+            logger.warning("Monitor not initialized")
             return False
             
-        device = self.monitor.poll()
-        if device and self.should_process(device.action):
-            event_data = self.parse_event(device)
-            self.publish_event(event_data)
-            return True
-        return False
+        try:
+            device = self.monitor.poll()
+            if device and self.should_process(device.action):
+                event_data = self.parse_event(device)
+                self.publish_event(event_data)
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Error processing device event: {e}")
+            raise

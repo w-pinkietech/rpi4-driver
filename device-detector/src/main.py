@@ -68,27 +68,80 @@ class DeviceDetectorService:
         logger.info("Starting device detection service...")
         self.running = True
         
+        retry_count = 0
+        max_retries = 5
+        
+        while self.running:
+            try:
+                # Start monitoring udev events
+                for device in iter(self.detector.monitor.poll, None):
+                    if not self.running:
+                        break
+                        
+                    if self.detector.should_process(device.action):
+                        try:
+                            event_data = self.detector.parse_event(device)
+                            self.detector.publish_event(event_data)
+                            
+                            logger.info(
+                                f"Event: {device.action} - {device.device_node} "
+                                f"({device.get('ID_VENDOR_ID', 'unknown')})"
+                            )
+                            
+                            # Reset retry count on successful publish
+                            retry_count = 0
+                            
+                        except redis.ConnectionError as e:
+                            logger.error(f"Redis connection error: {e}")
+                            retry_count += 1
+                            
+                            if retry_count >= max_retries:
+                                logger.error(f"Max retries ({max_retries}) reached. Exiting.")
+                                break
+                                
+                            # Attempt to reconnect
+                            logger.info(f"Attempting reconnection (retry {retry_count}/{max_retries})...")
+                            if self.reconnect_redis():
+                                logger.info("Redis reconnection successful")
+                            else:
+                                logger.error("Redis reconnection failed")
+                                
+                        except Exception as e:
+                            logger.error(f"Error processing device event: {e}")
+                            
+            except KeyboardInterrupt:
+                logger.info("Received interrupt signal")
+                break
+            except Exception as e:
+                logger.error(f"Monitoring error: {e}")
+                break
+                
+        self.stop()
+    
+    def reconnect_redis(self) -> bool:
+        """Attempt to reconnect to Redis
+        
+        Returns:
+            True if reconnection successful
+        """
         try:
-            # Start monitoring udev events
-            for device in iter(self.detector.monitor.poll, None):
-                if not self.running:
-                    break
-                    
-                if self.detector.should_process(device.action):
-                    event_data = self.detector.parse_event(device)
-                    self.detector.publish_event(event_data)
-                    
-                    logger.info(
-                        f"Event: {device.action} - {device.device_node} "
-                        f"({device.get('ID_VENDOR_ID', 'unknown')})"
-                    )
-                    
-        except KeyboardInterrupt:
-            logger.info("Received interrupt signal")
+            if self.detector.redis_client:
+                self.detector.redis_client.close()
+                
+            self.detector.redis_client = redis.Redis(
+                host=self.detector.redis_host,
+                decode_responses=True,
+                socket_keepalive=True,
+                socket_keepalive_options={}
+            )
+            
+            # Test connection
+            self.detector.redis_client.ping()
+            return True
+            
         except Exception as e:
-            logger.error(f"Monitoring error: {e}")
-        finally:
-            self.stop()
+            logger.error(f"Redis reconnection failed: {e}")
+            return False
     
     def stop(self) -> None:
         """Stop the service gracefully"""

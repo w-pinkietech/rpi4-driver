@@ -2,6 +2,8 @@
 import pytest
 import json
 import time
+import redis
+from unittest.mock import Mock
 from src.detector import DeviceDetector
 
 
@@ -121,3 +123,132 @@ class TestDeviceDetector:
         published_data = json.loads(call_args[0][1])
         assert published_data['action'] == 'add'
         assert published_data['path'] == '/dev/ttyUSB0'
+    
+    def test_parse_event_error_handling(self):
+        """デバイスイベントのパースエラーをテスト"""
+        # Given: 不正なデバイスオブジェクト
+        detector = DeviceDetector()
+        mock_device = Mock()
+        mock_device.action = 'add'
+        mock_device.device_node = None  # Noneを設定してエラーを発生させる
+        mock_device.properties = Mock(side_effect=Exception("Property error"))
+        
+        # When/Then: パース時に例外が発生
+        with pytest.raises(Exception):
+            detector.parse_event(mock_device)
+    
+    def test_publish_event_without_redis_client(self):
+        """Redisクライアントなしでのイベント発行をテスト"""
+        # Given: Redisクライアントが設定されていないDetector
+        detector = DeviceDetector()
+        detector.redis_client = None
+        
+        event_data = {
+            'action': 'add',
+            'path': '/dev/ttyUSB0',
+            'timestamp': time.time(),
+            'properties': {}
+        }
+        
+        # When/Then: 例外は発生せず、警告ログが出力される
+        detector.publish_event(event_data)  # Should not raise exception
+    
+    def test_publish_event_redis_connection_error(self, mock_redis):
+        """Redis接続エラー時のイベント発行をテスト"""
+        # Given: Redis接続エラーを発生させる設定
+        detector = DeviceDetector()
+        mock_redis.publish.side_effect = redis.ConnectionError("Connection lost")
+        detector.redis_client = mock_redis
+        
+        event_data = {
+            'action': 'add',
+            'path': '/dev/ttyUSB0',
+            'timestamp': time.time(),
+            'properties': {}
+        }
+        
+        # When/Then: ConnectionErrorが再発生
+        with pytest.raises(redis.ConnectionError):
+            detector.publish_event(event_data)
+    
+    def test_process_single_event_without_monitor(self):
+        """モニターなしでのイベント処理をテスト"""
+        # Given: モニターが初期化されていないDetector
+        detector = DeviceDetector()
+        detector.monitor = None
+        
+        # When: イベント処理を試行
+        result = detector.process_single_event()
+        
+        # Then: Falseが返される
+        assert result is False
+    
+    def test_process_single_event_error_handling(self, mock_pyudev_monitor, mock_redis):
+        """イベント処理中のエラーをテスト"""
+        # Given: エラーを発生させるモニター
+        detector = DeviceDetector()
+        detector.monitor = mock_pyudev_monitor
+        detector.redis_client = mock_redis
+        
+        mock_pyudev_monitor.poll.side_effect = Exception("Monitor error")
+        
+        # When/Then: 例外が再発生
+        with pytest.raises(Exception):
+            detector.process_single_event()
+    
+    def test_publish_event_json_error(self, mock_redis):
+        """イベントのJSONシリアライズエラーをテスト"""
+        # Given: JSONシリアライズできないデータ
+        detector = DeviceDetector()
+        detector.redis_client = mock_redis
+        
+        # Mock json.dumps to raise exception
+        import json
+        original_dumps = json.dumps
+        json.dumps = Mock(side_effect=TypeError("JSON serialize error"))
+        
+        event_data = {
+            'action': 'add',
+            'path': '/dev/ttyUSB0',
+            'timestamp': time.time(),
+            'properties': {}
+        }
+        
+        try:
+            # When/Then: TypeErrorが発生
+            with pytest.raises(TypeError):
+                detector.publish_event(event_data)
+        finally:
+            # Restore original json.dumps
+            json.dumps = original_dumps
+    
+    def test_process_single_event_poll_error(self, mock_pyudev_monitor, mock_redis):
+        """モニターのpollエラーをテスト"""
+        # Given: pollで例外を発生させるモニター
+        detector = DeviceDetector()
+        detector.monitor = mock_pyudev_monitor
+        detector.redis_client = mock_redis
+        
+        # pollが特定の例外を発生させる
+        mock_pyudev_monitor.poll.side_effect = RuntimeError("Poll error")
+        
+        # When/Then: RuntimeErrorが再発生
+        with pytest.raises(RuntimeError):
+            detector.process_single_event()
+    
+    def test_process_single_event_no_device(self, mock_pyudev_monitor, mock_redis):
+        """デバイスがない場合のイベント処理をテスト"""
+        # Given: pollがNoneを返すモニター
+        detector = DeviceDetector()
+        detector.monitor = mock_pyudev_monitor
+        detector.redis_client = mock_redis
+        
+        # pollがNoneを返すように設定
+        mock_pyudev_monitor.poll.return_value = None
+        
+        # When: イベント処理を実行
+        result = detector.process_single_event()
+        
+        # Then: Falseが返され、Redis発行は呼ばれない
+        assert result is False
+        mock_redis.publish.assert_not_called()
