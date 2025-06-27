@@ -42,6 +42,27 @@ When performing **code reviews or PR submissions**, refer to:
 - Python 3.11+
 - Access to /dev devices from Docker containers
 
+## Local Development Commit Rules
+開発中は**チェックポイントコミット**を活用して、細かく作業状態を記録します：
+
+### コミットの頻度とタイミング
+- **30分〜1時間ごと**に定期的にコミット
+- 小さな機能単位が完成したらコミット
+- テストが通ったタイミングでコミット
+- リファクタリング前後でコミット
+
+### コミットメッセージの例
+```bash
+# 開発中のチェックポイント
+git commit -m "WIP: implement basic GPIO reading logic"
+git commit -m "checkpoint: GPIO tests passing, needs refactoring"
+
+# 作業終了時
+git commit -m "WIP: end of day - I2C scanner 70% complete"
+```
+
+詳細は `docs/process/DEVELOPMENT_RULES.md` の「ローカル開発時のコミットルール」セクションを参照してください。
+
 ## Testing Commands
 ```bash
 # Run tests
