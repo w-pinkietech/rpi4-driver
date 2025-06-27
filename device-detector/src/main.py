@@ -28,7 +28,21 @@ class DeviceDetectorService:
             redis_host=os.getenv('REDIS_HOST', 'redis')
         )
         self.running = False
+        self.max_retries = int(os.getenv('REDIS_MAX_RETRIES', '5'))
         
+    def _create_redis_client(self) -> redis.Redis:
+        """Create a new Redis client with standard configuration
+        
+        Returns:
+            Configured Redis client
+        """
+        return redis.Redis(
+            host=self.detector.redis_host,
+            decode_responses=True,
+            socket_keepalive=True,
+            socket_keepalive_options={}
+        )
+    
     def setup(self) -> bool:
         """Setup detector with Redis and udev connections
         
@@ -37,12 +51,7 @@ class DeviceDetectorService:
         """
         try:
             # Setup Redis connection
-            self.detector.redis_client = redis.Redis(
-                host=self.detector.redis_host,
-                decode_responses=True,
-                socket_keepalive=True,
-                socket_keepalive_options={}
-            )
+            self.detector.redis_client = self._create_redis_client()
             
             # Test Redis connection
             self.detector.redis_client.ping()
@@ -69,7 +78,6 @@ class DeviceDetectorService:
         self.running = True
         
         retry_count = 0
-        max_retries = 5
         
         while self.running:
             try:
@@ -95,12 +103,12 @@ class DeviceDetectorService:
                             logger.error(f"Redis connection error: {e}")
                             retry_count += 1
                             
-                            if retry_count >= max_retries:
-                                logger.error(f"Max retries ({max_retries}) reached. Exiting.")
+                            if retry_count >= self.max_retries:
+                                logger.error(f"Max retries ({self.max_retries}) reached. Exiting.")
                                 break
                                 
                             # Attempt to reconnect
-                            logger.info(f"Attempting reconnection (retry {retry_count}/{max_retries})...")
+                            logger.info(f"Attempting reconnection (retry {retry_count}/{self.max_retries})...")
                             if self.reconnect_redis():
                                 logger.info("Redis reconnection successful")
                             else:
@@ -128,12 +136,7 @@ class DeviceDetectorService:
             if self.detector.redis_client:
                 self.detector.redis_client.close()
                 
-            self.detector.redis_client = redis.Redis(
-                host=self.detector.redis_host,
-                decode_responses=True,
-                socket_keepalive=True,
-                socket_keepalive_options={}
-            )
+            self.detector.redis_client = self._create_redis_client()
             
             # Test connection
             self.detector.redis_client.ping()

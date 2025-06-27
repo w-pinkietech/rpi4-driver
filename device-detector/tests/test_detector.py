@@ -3,7 +3,7 @@ import pytest
 import json
 import time
 import redis
-from unittest.mock import Mock
+from unittest.mock import Mock, PropertyMock, patch
 from src.detector import DeviceDetector
 
 
@@ -125,21 +125,23 @@ class TestDeviceDetector:
         assert published_data['path'] == '/dev/ttyUSB0'
     
     def test_parse_event_error_handling(self):
-        """デバイスイベントのパースエラーをテスト"""
-        # Given: 不正なデバイスオブジェクト
+        """Test device event parsing error handling"""
+        # Given: Device object that raises error when time.time() fails (simulated)
         detector = DeviceDetector()
         mock_device = Mock()
         mock_device.action = 'add'
-        mock_device.device_node = None  # Noneを設定してエラーを発生させる
-        mock_device.properties = Mock(side_effect=Exception("Property error"))
+        mock_device.device_node = '/dev/ttyUSB0'
+        mock_device.properties = {}
         
-        # When/Then: パース時に例外が発生
-        with pytest.raises(Exception):
-            detector.parse_event(mock_device)
+        # Patch time.time to raise an exception
+        with patch('src.detector.time.time', side_effect=RuntimeError("Time error")):
+            # When/Then: Exception occurs during parsing
+            with pytest.raises(RuntimeError):
+                detector.parse_event(mock_device)
     
     def test_publish_event_without_redis_client(self):
-        """Redisクライアントなしでのイベント発行をテスト"""
-        # Given: Redisクライアントが設定されていないDetector
+        """Test event publishing without Redis client"""
+        # Given: Detector without Redis client configured
         detector = DeviceDetector()
         detector.redis_client = None
         
@@ -150,12 +152,12 @@ class TestDeviceDetector:
             'properties': {}
         }
         
-        # When/Then: 例外は発生せず、警告ログが出力される
+        # When/Then: No exception occurs, warning log is output
         detector.publish_event(event_data)  # Should not raise exception
     
     def test_publish_event_redis_connection_error(self, mock_redis):
-        """Redis接続エラー時のイベント発行をテスト"""
-        # Given: Redis接続エラーを発生させる設定
+        """Test event publishing during Redis connection error"""
+        # Given: Configuration that triggers Redis connection error
         detector = DeviceDetector()
         mock_redis.publish.side_effect = redis.ConnectionError("Connection lost")
         detector.redis_client = mock_redis
@@ -167,38 +169,38 @@ class TestDeviceDetector:
             'properties': {}
         }
         
-        # When/Then: ConnectionErrorが再発生
+        # When/Then: ConnectionError is re-raised
         with pytest.raises(redis.ConnectionError):
             detector.publish_event(event_data)
     
     def test_process_single_event_without_monitor(self):
-        """モニターなしでのイベント処理をテスト"""
-        # Given: モニターが初期化されていないDetector
+        """Test event processing without monitor"""
+        # Given: Detector without initialized monitor
         detector = DeviceDetector()
         detector.monitor = None
         
-        # When: イベント処理を試行
+        # When: Attempt event processing
         result = detector.process_single_event()
         
-        # Then: Falseが返される
+        # Then: False is returned
         assert result is False
     
     def test_process_single_event_error_handling(self, mock_pyudev_monitor, mock_redis):
-        """イベント処理中のエラーをテスト"""
-        # Given: エラーを発生させるモニター
+        """Test error handling during event processing"""
+        # Given: Monitor that raises errors
         detector = DeviceDetector()
         detector.monitor = mock_pyudev_monitor
         detector.redis_client = mock_redis
         
-        mock_pyudev_monitor.poll.side_effect = Exception("Monitor error")
+        mock_pyudev_monitor.poll.side_effect = RuntimeError("Monitor error")
         
-        # When/Then: 例外が再発生
-        with pytest.raises(Exception):
+        # When/Then: Exception is re-raised
+        with pytest.raises(RuntimeError):
             detector.process_single_event()
     
     def test_publish_event_json_error(self, mock_redis):
-        """イベントのJSONシリアライズエラーをテスト"""
-        # Given: JSONシリアライズできないデータ
+        """Test JSON serialization error for events"""
+        # Given: Data that cannot be JSON serialized
         detector = DeviceDetector()
         detector.redis_client = mock_redis
         
@@ -215,7 +217,7 @@ class TestDeviceDetector:
         }
         
         try:
-            # When/Then: TypeErrorが発生
+            # When/Then: TypeError occurs
             with pytest.raises(TypeError):
                 detector.publish_event(event_data)
         finally:
@@ -223,32 +225,32 @@ class TestDeviceDetector:
             json.dumps = original_dumps
     
     def test_process_single_event_poll_error(self, mock_pyudev_monitor, mock_redis):
-        """モニターのpollエラーをテスト"""
-        # Given: pollで例外を発生させるモニター
+        """Test monitor poll error"""
+        # Given: Monitor that raises exception on poll
         detector = DeviceDetector()
         detector.monitor = mock_pyudev_monitor
         detector.redis_client = mock_redis
         
-        # pollが特定の例外を発生させる
+        # poll raises specific exception
         mock_pyudev_monitor.poll.side_effect = RuntimeError("Poll error")
         
-        # When/Then: RuntimeErrorが再発生
+        # When/Then: RuntimeError is re-raised
         with pytest.raises(RuntimeError):
             detector.process_single_event()
     
     def test_process_single_event_no_device(self, mock_pyudev_monitor, mock_redis):
-        """デバイスがない場合のイベント処理をテスト"""
-        # Given: pollがNoneを返すモニター
+        """Test event processing when no device is available"""
+        # Given: Monitor that returns None on poll
         detector = DeviceDetector()
         detector.monitor = mock_pyudev_monitor
         detector.redis_client = mock_redis
         
-        # pollがNoneを返すように設定
+        # Configure poll to return None
         mock_pyudev_monitor.poll.return_value = None
         
-        # When: イベント処理を実行
+        # When: Execute event processing
         result = detector.process_single_event()
         
-        # Then: Falseが返され、Redis発行は呼ばれない
+        # Then: False is returned and Redis publish is not called
         assert result is False
         mock_redis.publish.assert_not_called()

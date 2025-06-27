@@ -104,7 +104,7 @@ python -m pytest tests/ -v --cov=src
 
 Current coverage: **100%** (target: ≥90%)
 
-```
+```text
 Name              Stmts   Miss  Cover
 -------------------------------------
 src/detector.py      55     0   100%
