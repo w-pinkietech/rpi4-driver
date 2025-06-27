@@ -41,10 +41,18 @@ refactor/{簡潔な説明}              # リファクタリング
    - ユーザーの要求とブランチ名が一致しているか確認
    - 不一致の場合：新しいブランチの作成を提案
    - 例：「バグ修正」作業なのに`feature/`ブランチにいる場合
-6. **必要に応じて新ブランチ作成**
+
+### Issue作成と新ブランチ準備
+6. **対応するIssueの確認・作成**
+   - 新しい作業の場合：関連するIssueが存在するか確認
+   - Issueがない場合：作業内容に基づいてIssueを作成
+   ```bash
+   gh issue create --title "[作業内容の要約]" --body "[詳細説明]"
+   ```
+7. **Issue番号を含むブランチ作成**
    ```bash
    git checkout main && git pull origin main
-   git checkout -b [適切なブランチ名]
+   git checkout -b [type]/issue-[番号]-[簡潔な説明]
    ```
 
 この初期化により、適切な作業継続や新規作業開始を判断する。
