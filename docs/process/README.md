@@ -22,6 +22,10 @@ This directory contains all development process and workflow documentation for t
   - Project overview for AI assistance
   - Supported interfaces and requirements
   - Testing commands and Docker device access
+- **[CLAUDE_COLLABORATION.md](CLAUDE_COLLABORATION.md)** - Claude AI collaboration guidelines
+  - Guidelines for epic-level discussions
+  - Best practices for AI-assisted development
+  - When and how to mention Claude in issues/PRs
 
 ## 🎯 Process Principles
 

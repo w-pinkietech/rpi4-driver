@@ -3,6 +3,14 @@
 ## Overview
 This project provides drivers to monitor and access Raspberry Pi 4 interfaces from Docker containers.
 
+## Important: When Creating Issues or PRs
+When creating new issues or pull requests, please refer to:
+- **Issue Templates**: `.github/ISSUE_TEMPLATE/` - Use appropriate template (epic, sub-issue, feature request, bug report)
+- **PR Template**: `.github/pull_request_template.md` - Follow the structured format
+- **Claude AI Guidelines**: `docs/process/CLAUDE_COLLABORATION.md` - For effective AI collaboration
+
+特に、エピックを作成する際は、サブイシューの品質基準を確認してください。
+
 ## Documentation Reference Guide
 
 ### 📐 Design and Architecture
@@ -33,6 +41,27 @@ When performing **code reviews or PR submissions**, refer to:
 - Docker and Docker Compose
 - Python 3.11+
 - Access to /dev devices from Docker containers
+
+## Local Development Commit Rules
+開発中は**チェックポイントコミット**を活用して、細かく作業状態を記録します：
+
+### コミットの頻度とタイミング
+- **30分〜1時間ごと**に定期的にコミット
+- 小さな機能単位が完成したらコミット
+- テストが通ったタイミングでコミット
+- リファクタリング前後でコミット
+
+### コミットメッセージの例
+```bash
+# 開発中のチェックポイント
+git commit -m "WIP: implement basic GPIO reading logic"
+git commit -m "checkpoint: GPIO tests passing, needs refactoring"
+
+# 作業終了時
+git commit -m "WIP: end of day - I2C scanner 70% complete"
+```
+
+詳細は `docs/process/DEVELOPMENT_RULES.md` の「ローカル開発時のコミットルール」セクションを参照してください。
 
 ## Testing Commands
 ```bash

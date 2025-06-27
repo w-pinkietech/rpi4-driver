@@ -39,6 +39,20 @@ graph LR
     G --> H[レビュー&マージ]
 ```
 
+### 🤖 Claude AI活用のタイミング
+- **エピック分解時**: 大きな機能開発の計画段階
+- **設計レビュー時**: アーキテクチャの妥当性確認
+- **複雑な問題解決時**: 技術的な課題の相談
+
+**使用例**:
+```bash
+# Issueでエピック分解を依頼
+@claude このエピックをサブイシューに分解してください
+
+# PRでレビューを依頼
+@claude このPRのアーキテクチャをレビューしてください
+```
+
 ### 📝 具体的な手順
 ```bash
 # 1. 最新のmainを取得
@@ -99,6 +113,65 @@ refactor/{簡潔な説明}              # リファクタリング
 
 <footer>
 ```
+
+### 🔄 ローカル開発時のコミットルール
+
+開発中は**チェックポイントを細かく取る**ため、以下のルールで頻繁にコミットを行います：
+
+#### チェックポイントコミットの方針
+- **頻度**: 30分〜1時間ごと、または機能の小さな単位が完成したとき
+- **目的**: 作業の巻き戻しを容易にし、開発の進捗を細かく記録
+- **原則**: 完璧でなくても、動作する状態であればコミット
+
+#### コミットメッセージの使い分け
+```bash
+# 開発中のチェックポイントコミット
+git commit -m "WIP: implement basic GPIO reading logic"
+git commit -m "WIP: add error handling for GPIO access"
+git commit -m "checkpoint: GPIO tests passing, needs refactoring"
+
+# 機能が完成したときの正式なコミット
+git commit -m "feat(gpio): implement GPIO monitoring with error handling
+
+- Add GPIO pin reading functionality
+- Implement proper error handling
+- Add unit tests with 95% coverage
+
+Refs #42"
+```
+
+#### ローカル開発のベストプラクティス
+```bash
+# 1. 作業開始時に現在の状態を記録
+git commit -m "checkpoint: starting work on I2C implementation"
+
+# 2. 小さな進捗でもコミット
+git commit -m "WIP: add I2C device detection skeleton"
+
+# 3. テストが通ったらコミット
+git commit -m "checkpoint: I2C basic tests passing"
+
+# 4. リファクタリング前にコミット
+git commit -m "checkpoint: before refactoring I2C scanner"
+
+# 5. 1日の終わりに必ずコミット
+git commit -m "WIP: end of day - I2C scanner 70% complete"
+```
+
+#### プッシュ前の整理
+PR作成前に、必要に応じてコミットを整理します：
+```bash
+# インタラクティブリベースでコミットを整理
+git rebase -i HEAD~10
+
+# WIPコミットをまとめて意味のある単位に
+# pick -> squash でコミットを統合
+# コミットメッセージを適切に書き直す
+```
+
+**注意**: 
+- チームメンバーと共有しているブランチではリベースは避ける
+- `main`ブランチには整理されたコミットのみをマージ
 
 #### type一覧
 | type | 用途 | 例 |
@@ -349,9 +422,12 @@ pytest-watch
 # 別ターミナルでログ監視
 docker-compose logs -f device-detector
 
-# 定期的にコミット（1-2時間ごと）
+# 細かくチェックポイントコミット（30分-1時間ごと）
 git add -p  # 対話的に追加
-git commit -m "feat(detector): add partial implementation"
+git commit -m "WIP: add device detection logic"
+
+# または現在の作業状態を記録
+git commit -m "checkpoint: tests failing, debugging USB detection"
 ```
 
 ### 🌙 終業前のチェックリスト
