@@ -1,0 +1,1 @@
+Update GitHub secrets with the latest Claude AI OAuth credentials from ~/.claude/.credentials.json by running the update-github-secrets.sh script.
