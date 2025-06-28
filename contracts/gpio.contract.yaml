@@ -1,0 +1,180 @@
+# GPIO Interface Contract Specification
+# Version 1.0 - RPi4 Driver Project
+#
+# This contract defines the formal specification for GPIO operations.
+# All implementations (mock and hardware) must satisfy these constraints.
+
+interface: GPIO
+version: 1.0
+description: "General Purpose Input/Output pin interface contract"
+
+# Global invariants that must always hold
+invariants:
+  pin_state:
+    description: "Pin output value must be binary"
+    constraint: "pin.value ∈ {HIGH, LOW}"
+    
+  pin_direction:
+    description: "Pin direction must be input or output"
+    constraint: "pin.direction ∈ {INPUT, OUTPUT}"
+    
+  pull_resistor:
+    description: "Pull resistor configuration"
+    constraint: "pin.pull ∈ {PULL_UP, PULL_DOWN, NONE}"
+    
+  pin_numbering:
+    description: "Valid pin numbers for RPi4"
+    constraint: "pin.id ∈ {2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27}"
+
+# Operation specifications
+operations:
+  initialize:
+    description: "Initialize GPIO subsystem"
+    preconditions: []
+    postconditions:
+      - "gpio.initialized == true"
+      - "∀pin ∈ valid_pins: pin.direction == INPUT"
+      - "∀pin ∈ valid_pins: pin.pull == NONE"
+    errors:
+      - PERMISSION_DENIED: "Insufficient privileges to access GPIO"
+      - ALREADY_INITIALIZED: "GPIO already initialized"
+
+  set_direction:
+    description: "Configure pin as input or output"
+    parameters:
+      pin_id:
+        type: "integer"
+        constraint: "pin_id ∈ valid_pins"
+      direction:
+        type: "enum"
+        values: ["INPUT", "OUTPUT"]
+    preconditions:
+      - "gpio.initialized == true"
+      - "pin_id ∈ valid_pins"
+      - "direction ∈ {INPUT, OUTPUT}"
+    postconditions:
+      - "pin.direction == direction"
+      - "direction == OUTPUT → pin.value == LOW"  # Output pins start LOW
+      - "direction == INPUT → pin.pull == NONE"   # Input pins have no pull by default
+    timing:
+      max_latency_us: 100
+      typical_latency_us: 10
+
+  read:
+    description: "Read current pin value"
+    parameters:
+      pin_id:
+        type: "integer"
+        constraint: "pin_id ∈ valid_pins"
+    preconditions:
+      - "gpio.initialized == true"
+      - "pin_id ∈ valid_pins"
+    postconditions:
+      - "result ∈ {HIGH, LOW}"
+      - "pin.direction == INPUT → result == actual_pin_state"
+      - "pin.direction == OUTPUT → result == pin.value"
+    timing:
+      max_latency_us: 50
+      typical_latency_us: 5
+
+  write:
+    description: "Set output pin value"
+    parameters:
+      pin_id:
+        type: "integer"
+        constraint: "pin_id ∈ valid_pins"
+      value:
+        type: "enum"
+        values: ["HIGH", "LOW"]
+    preconditions:
+      - "gpio.initialized == true"
+      - "pin_id ∈ valid_pins"
+      - "pin.direction == OUTPUT"
+      - "value ∈ {HIGH, LOW}"
+    postconditions:
+      - "pin.value == value"
+      - "read(pin_id) == value"  # Reading back returns written value
+    errors:
+      - INVALID_DIRECTION: "Cannot write to INPUT pin"
+    timing:
+      max_latency_us: 50
+      typical_latency_us: 5
+
+  set_pull:
+    description: "Configure internal pull resistor"
+    parameters:
+      pin_id:
+        type: "integer"
+        constraint: "pin_id ∈ valid_pins"
+      pull:
+        type: "enum"
+        values: ["PULL_UP", "PULL_DOWN", "NONE"]
+    preconditions:
+      - "gpio.initialized == true"
+      - "pin_id ∈ valid_pins"
+      - "pin.direction == INPUT"  # Only input pins can have pull resistors
+      - "pull ∈ {PULL_UP, PULL_DOWN, NONE}"
+    postconditions:
+      - "pin.pull == pull"
+    errors:
+      - INVALID_DIRECTION: "Cannot set pull on OUTPUT pin"
+    timing:
+      max_latency_us: 100
+      typical_latency_us: 20
+
+  cleanup:
+    description: "Release GPIO resources"
+    preconditions:
+      - "gpio.initialized == true"
+    postconditions:
+      - "gpio.initialized == false"
+      - "∀pin ∈ valid_pins: pin.direction == INPUT"
+      - "∀pin ∈ valid_pins: pin.value == LOW"
+
+# State transitions
+state_machine:
+  states:
+    - UNINITIALIZED
+    - INITIALIZED
+    - ERROR
+    
+  transitions:
+    - from: UNINITIALIZED
+      to: INITIALIZED
+      trigger: initialize
+      
+    - from: INITIALIZED
+      to: UNINITIALIZED
+      trigger: cleanup
+      
+    - from: INITIALIZED
+      to: ERROR
+      trigger: hardware_fault
+      
+    - from: ERROR
+      to: UNINITIALIZED
+      trigger: reset
+
+# Performance constraints
+performance:
+  max_pins_per_operation: 32
+  max_operations_per_second: 100000
+  interrupt_latency_us: 10
+  context_switch_overhead_us: 5
+
+# Test properties
+test_properties:
+  - name: "Direction Toggle Property"
+    property: |
+      ∀pin, ∀seq ∈ {INPUT,OUTPUT}*:
+        repeated direction changes preserve invariants
+        
+  - name: "Read-Write Consistency"
+    property: |
+      ∀pin where pin.direction == OUTPUT:
+        write(pin, value) → read(pin) == value
+        
+  - name: "Input Independence"
+    property: |
+      ∀pin1, pin2 where pin1 ≠ pin2:
+        operations on pin1 do not affect pin2 state

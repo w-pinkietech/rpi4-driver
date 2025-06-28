@@ -1,0 +1,289 @@
+# I2C Interface Contract Specification
+# Version 1.0 - RPi4 Driver Project
+#
+# This contract defines the formal specification for I2C bus operations.
+# Covers both master and slave operations with timing constraints.
+
+interface: I2C
+version: 1.0
+description: "Inter-Integrated Circuit (I2C) bus interface contract"
+
+# Global invariants
+invariants:
+  address_space:
+    description: "Valid 7-bit I2C addresses"
+    constraint: "device.address ∈ [0x08..0x77]"  # 0x00-0x07 and 0x78-0x7F are reserved
+    
+  bus_state:
+    description: "Bus can only be in one state"
+    constraint: "bus.state ∈ {IDLE, START, ADDRESS, DATA, STOP, ERROR}"
+    
+  bus_speed:
+    description: "Supported I2C speeds"
+    constraint: "bus.speed ∈ {100000, 400000, 1000000, 3400000}"  # Standard, Fast, Fast+, High-speed
+    
+  clock_stretch:
+    description: "Maximum clock stretching time"
+    constraint: "clock_stretch_us ≤ 500"
+    
+  data_size:
+    description: "Data must be byte-aligned"
+    constraint: "∀data: len(data) mod 8 == 0"
+
+# Bus state machine
+state_machine:
+  states:
+    IDLE:
+      description: "Bus is free, both SDA and SCL high"
+      invariants:
+        - "SDA == HIGH"
+        - "SCL == HIGH"
+        
+    START:
+      description: "Start condition detected"
+      invariants:
+        - "SDA: HIGH → LOW while SCL == HIGH"
+        
+    ADDRESS:
+      description: "Transmitting 7-bit address + R/W bit"
+      invariants:
+        - "bits_transmitted ∈ [0..8]"
+        
+    DATA:
+      description: "Transmitting or receiving data bytes"
+      invariants:
+        - "bits_transmitted ∈ [0..8]"
+        - "byte_count ≥ 0"
+        
+    STOP:
+      description: "Stop condition detected"
+      invariants:
+        - "SDA: LOW → HIGH while SCL == HIGH"
+        
+    ERROR:
+      description: "Bus error detected"
+      invariants:
+        - "error_code ∈ {NACK, TIMEOUT, ARBITRATION_LOST, BUS_BUSY}"
+
+  transitions:
+    - from: IDLE
+      to: START
+      condition: "start_condition_detected"
+      
+    - from: START
+      to: ADDRESS
+      condition: "true"  # Always follows start
+      
+    - from: ADDRESS
+      to: DATA
+      condition: "ack_received"
+      
+    - from: ADDRESS
+      to: ERROR
+      condition: "nack_received"
+      
+    - from: DATA
+      to: DATA
+      condition: "more_bytes && ack_received"
+      
+    - from: DATA
+      to: STOP
+      condition: "no_more_bytes || nack_received"
+      
+    - from: STOP
+      to: IDLE
+      condition: "stop_condition_complete"
+      
+    - from: ERROR
+      to: IDLE
+      condition: "bus_reset"
+
+# Operation specifications
+operations:
+  initialize:
+    description: "Initialize I2C bus"
+    parameters:
+      bus_id:
+        type: "integer"
+        constraint: "bus_id ∈ available_buses"
+      speed:
+        type: "integer"
+        constraint: "speed ∈ {100000, 400000, 1000000, 3400000}"
+    preconditions:
+      - "bus.state == UNINITIALIZED"
+    postconditions:
+      - "bus.state == IDLE"
+      - "bus.speed == speed"
+      - "bus.initialized == true"
+    errors:
+      - PERMISSION_DENIED: "Insufficient privileges"
+      - BUS_NOT_FOUND: "I2C bus does not exist"
+      - ALREADY_INITIALIZED: "Bus already initialized"
+
+  scan:
+    description: "Scan bus for responding devices"
+    parameters:
+      start_addr:
+        type: "integer"
+        default: 0x08
+        constraint: "start_addr ∈ [0x08..0x77]"
+      end_addr:
+        type: "integer"
+        default: 0x77
+        constraint: "end_addr ∈ [start_addr..0x77]"
+    preconditions:
+      - "bus.state == IDLE"
+      - "bus.initialized == true"
+    postconditions:
+      - "result ⊆ [start_addr..end_addr]"
+      - "∀addr ∈ result: device_responded(addr)"
+      - "bus.state == IDLE"
+    timing:
+      max_duration_ms: "(end_addr - start_addr + 1) * 1.0"  # 1ms per address
+      typical_duration_ms: "(end_addr - start_addr + 1) * 0.1"
+
+  read:
+    description: "Read data from I2C device"
+    parameters:
+      address:
+        type: "integer"
+        constraint: "address ∈ [0x08..0x77]"
+      length:
+        type: "integer"
+        constraint: "length > 0 && length ≤ 32768"  # Typical max
+      register:
+        type: "integer"
+        optional: true
+        constraint: "register ∈ [0x00..0xFF]"
+    preconditions:
+      - "bus.state == IDLE"
+      - "bus.initialized == true"
+      - "device_exists(address)"  # Ideally verified by scan
+    postconditions:
+      - "len(result) == length || error_occurred"
+      - "∀byte ∈ result: byte ∈ [0x00..0xFF]"
+      - "bus.state == IDLE"
+    errors:
+      - NACK: "Device did not acknowledge address"
+      - TIMEOUT: "Operation exceeded time limit"
+      - BUS_ERROR: "Bus error during transfer"
+    timing:
+      # Time = start + address + ack + (data + ack) * length + stop
+      max_duration_ms: "1 + (length * 0.1)"
+      timeout_ms: "max(100, length * 0.5)"
+
+  write:
+    description: "Write data to I2C device"
+    parameters:
+      address:
+        type: "integer"
+        constraint: "address ∈ [0x08..0x77]"
+      data:
+        type: "bytes"
+        constraint: "len(data) > 0 && len(data) ≤ 32768"
+      register:
+        type: "integer"
+        optional: true
+        constraint: "register ∈ [0x00..0xFF]"
+    preconditions:
+      - "bus.state == IDLE"
+      - "bus.initialized == true"
+      - "∀byte ∈ data: byte ∈ [0x00..0xFF]"
+    postconditions:
+      - "bytes_written == len(data) || error_occurred"
+      - "bus.state == IDLE"
+    errors:
+      - NACK: "Device did not acknowledge"
+      - TIMEOUT: "Operation exceeded time limit"
+      - BUS_ERROR: "Bus error during transfer"
+    timing:
+      max_duration_ms: "1 + (len(data) * 0.1)"
+      timeout_ms: "max(100, len(data) * 0.5)"
+
+  read_write:
+    description: "Combined write-then-read operation (repeated start)"
+    parameters:
+      address:
+        type: "integer"
+        constraint: "address ∈ [0x08..0x77]"
+      write_data:
+        type: "bytes"
+        constraint: "len(write_data) > 0"
+      read_length:
+        type: "integer"
+        constraint: "read_length > 0"
+    preconditions:
+      - "bus.state == IDLE"
+      - "bus.initialized == true"
+    postconditions:
+      - "len(result) == read_length || error_occurred"
+      - "bus.state == IDLE"
+    errors:
+      - NACK: "Device did not acknowledge"
+      - TIMEOUT: "Operation exceeded time limit"
+    timing:
+      max_duration_ms: "2 + (len(write_data) + read_length) * 0.1"
+
+  reset:
+    description: "Reset I2C bus to recover from error state"
+    preconditions:
+      - "bus.initialized == true"
+    postconditions:
+      - "bus.state == IDLE"
+      - "pending_operations == 0"
+    timing:
+      max_duration_ms: 10  # Bus reset sequence
+
+# Protocol properties
+protocol_properties:
+  arbitration:
+    description: "Multi-master arbitration rules"
+    rules:
+      - "Device outputting LOW wins over HIGH"
+      - "Device loses arbitration when outputting HIGH but reading LOW"
+      - "After losing arbitration, device must wait for STOP"
+      
+  clock_stretching:
+    description: "Slave can hold SCL low to slow down master"
+    constraints:
+      - "max_stretch_time_us: 500"
+      - "Only allowed during ACK and data bits"
+      
+  addressing:
+    description: "Address format and special addresses"
+    format: "7-bit address + R/W bit"
+    reserved:
+      - "0x00: General call"
+      - "0x01: CBUS"
+      - "0x02: Reserved"
+      - "0x03: Reserved"
+      - "0x04-0x07: Hs-mode master"
+      - "0x78-0x7B: 10-bit addressing"
+      - "0x7C-0x7F: Reserved"
+
+# Test properties
+test_properties:
+  - name: "Address Acknowledgment"
+    property: |
+      ∀addr ∈ scanned_devices:
+        write(addr, []) returns ACK
+        
+  - name: "Data Integrity"
+    property: |
+      ∀device, ∀data where supports_loopback(device):
+        write(device, data) → read(device, len(data)) == data
+        
+  - name: "Bus Recovery"
+    property: |
+      ∀error_state:
+        reset() → bus.state == IDLE
+        
+  - name: "Timing Constraints"
+    property: |
+      ∀operation:
+        execution_time ≤ specified_max_duration
+        
+  - name: "Multi-Device Independence"
+    property: |
+      ∀device1, device2 where device1.addr ≠ device2.addr:
+        operations on device1 do not affect device2
